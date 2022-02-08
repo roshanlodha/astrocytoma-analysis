@@ -1,5 +1,6 @@
-# Raw Data
+# Raw Data and temp files
 /Brain_GSE50161.csv
+/~*
 
 # History files
 .Rhistory

@@ -1,7 +1,7 @@
 Understanding the molecular phenotype of astrocytoma progression
 ================
 Roshan Lodha
-07 February, 2022
+08 February, 2022
 
 
 
@@ -45,20 +45,6 @@ knitr::opts_chunk$set(
 
 #Add packages
 library(tidyverse)
-```
-
-    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
-
-    ## v ggplot2 3.3.5     v purrr   0.3.4
-    ## v tibble  3.1.6     v dplyr   1.0.7
-    ## v tidyr   1.2.0     v stringr 1.4.0
-    ## v readr   2.1.2     v forcats 0.5.1
-
-    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
-
-``` r
 library(ggprism) #theme
 library(umap) #for later use
 library(Rtsne) #for later use
@@ -67,72 +53,6 @@ library(ggpubr) #theme
 #Set universal them for figures
 theme_set(ggprism::theme_prism()) #using GraphPad Prism based theme from ggprism package
 ```
-
--   The dataset I have chosen to work with this semester is the GSE50161
-    dataset from the paper “Expression data from human brain tumors and
-    human normal brain” from Griesinger et. al. The original dataset can
-    be found here:
-    <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50161>. The
-    processed data can be found here:
-    <https://www.kaggle.com/brunogrisci/brain-cancer-gene-expression-cumida>.
--   For this dataset, my primary question is whether or not we can
-    determine the subtype of astrocytoma (a form of brain cancer) using
-    gene expression data (Supervised Learning). The binary subquestion
-    will be to simply determine malignancy through the expression data.
-    The second question I would like to ask is how well the phenotype
-    correlates with the genotype (Unsupervised Learning), and what genes
-    are primarily responsible for the phenotypic variance. For this
-    problem, this means assessing the distance between a sample and its
-    cluster.
--   The dataset is a wide matrix, with over 50,000 variables for just
-    130 samples. This poses an interesting challenge for machine
-    learning, and I will likely have to first learn then apply
-    regularization or dimensional reduction to prevent overfitting. Each
-    row is the gene expression of profile of sample of human cells that
-    has 1 of 5 labels corresponding to the grade and presence of
-    astrocytoma (Grades I –> Grade IV or normal). Each column represents
-    the (normalized) expression of each gene.
--   The outcome of the project is to hopefully develop a tool that can
-    categorize the severity of an astrocytoma based on its gene
-    expression profile.
-
-# Excuetive Summary
-
--   Summarize the key (This could be a bulleted list)
-    -   information about your data set
-    -   major data cleaning
-    -   findings from EDA
-    -   Model output
-    -   Overall conclusions “Expression data from human brain tumors and
-        human normal brain” from Griesinger et. al. 
-
-# Abstract
-
--   Summary of the nature, finding and meaning of your data analysis
-    project.
--   1 paragraph written summary of your data analysis project
-
-# Introduction
-
-OUTLINE: \* astrocytoma background \* data from which paper \* variable
-discussion \* potential use cases of these models (e.g. autodiagnosis)
-\* how to improve model
-
-# Data Science Methods
-
-Broadly, data analysis will focus on dimensionality reduction and
-clustering of samples in order to establish boundaries between
-astrocytoma subtypes. This will be done using `PCA`, `tSNE`, and `UMAP`.
-PCA of the subtype averages will also be used to tease out genes that
-are the most significant contributors to astrocytoma progression.
-Subsequently, classification will be performed in several different
-manners. Logistic regression of dimensionally reduced data can be used
-to determine if a patient does or does not have cancer. `KNN` or
-`random forest` can we used to draw visualizable decision boundaries and
-to determine the similarities between different subtypes (there is
-currently significant debate on the categorization of astrocytoma based
-on histology alone). Finally, a `neural network` will be used to create
-a rudamentary classifier.
 
 # Exploratory Data Analysis
 
@@ -215,7 +135,7 @@ head(gene_expr[1:8]) ## displays just the first 8 transcripts of just the first 
 
 ## Data Vizualizations
 
-## Variable Correlations
+### Variable Correlations
 
 As the underlying question sought to distinguish cancer type via gene
 expression data, the gene expression across the 5 types were first
@@ -243,16 +163,11 @@ means_pca_plot <- ggplot(data = var_explained_df, aes(x = PC,y = Variance, group
   geom_line() + 
   geom_text(hjust = 0, nudge_x = 0.05)
 
-ggsave(file="./figures/means_pca.svg", plot = means_pca_plot)
-```
-
-    ## Saving 7 x 5 in image
-
-``` r
+ggsave(file="./figures/means_pca.svg", plot = means_pca_plot, height = 7, width = 7)
 means_pca_plot
 ```
 
-<img src="astrocytoma_files/figure-gfm/subtype-pca-1.png" width="80%" height="80%" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/subtype-pca-1.png" width="80%" height="80%" style="display: block; margin: auto;" />
 
 Following PCA, the top 5 contributing genes to astrocytoma
 differentiation were assessed by looking at the first 5 entries of
@@ -297,7 +212,7 @@ ggsave(file="./figures/pca.svg", plot = pca_plot, height = 7, width = 10)
 pca_plot
 ```
 
-<img src="astrocytoma_files/figure-gfm/pca-clustering-1.png" width="80%" height="80%" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/pca-clustering-1.png" width="80%" height="80%" style="display: block; margin: auto;" />
 PCA produces awful results, with little to no clustering by cancer
 subtype. This is common of gene set enrichment datasets, and thus
 advances techniques like tSNE and UMAP were developed to improve
@@ -316,41 +231,9 @@ ggsave(file="./figures/umap.svg", plot = umap_plot, height = 7, width = 10)
 umap_plot
 ```
 
-<img src="astrocytoma_files/figure-gfm/umap-1.png" width="80%" height="80%" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/umap-1.png" width="80%" height="80%" style="display: block; margin: auto;" />
 From the UMAP plot, we can clearly see much better separability, with
 the normal cells, medulloblastoma tumors, and ependymoma tumors (mostly)
 forming their own clusters. Additionally, it seems as though pilocytic
 astrocytomas are genetically similar to glioblastomas. # Statistical
 Learning: Modeling & Prediction
-
--   DSCI 451 will accomplish at least 1 simple linear model (or simple
-    logistic model)
-
--   DSCI 352/352M/452 requires the appropriate modeling for your data
-    set including machine learning
-
--   Types of modeling to try
-
--   Statistical prediction/modeling
-
--   Model selection
-
--   Cross-validation, Predictive R2
-
--   Interpret results
-
--   Challenge results
-
-# Discussion
-
--   Discussion of the answers to the data science questions framed in
-    the introduction
-
-# Conclusions
-
-# Acknowledgments
-
-# References
-
--   Include a bib file in the markdown report
--   Or hand written citations.
