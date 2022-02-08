@@ -3,11 +3,12 @@ title: "Understanding the molecular phenotype of astrocytoma progression"
 #subtitle: "Using gene set enrichment analysis to create a auto-diagnostic tool for astrocytoma" 
 author: "Roshan Lodha"
 date:  "`r format(Sys.time(), '%d %B, %Y')`"
-output:
-  bookdown::pdf_document2:
-    toc: true
-    toc_depth: 4
-    fig_caption: true
+#output:
+#  bookdown::pdf_document2:
+#    toc: true
+#    toc_depth: 4
+#    fig_caption: true
+output: github_document
 fontsize: 12pt
 geometry: "left=1cm,right=1cm,top=1.5cm,bottom=1.5cm"
 always_allow_html: yes
@@ -28,7 +29,7 @@ header-includes:
 #- \fancyhead{DRAFT}
 ---
 
-```{r setup, include = TRUE}
+```{r setup, include = TRUE, message = FALSE}
 
 knitr::opts_chunk$set(
   cache = FALSE, # if TRUE knitr will cache results to reuse in future knits
@@ -57,66 +58,10 @@ theme_set(ggprism::theme_prism()) #using GraphPad Prism based theme from ggprism
 
 ```
 
-```{r, notes}
-
-#Please know that you can use a html output but you need to keep the sectioning.
-
-#Please Reference your figures and tables so that it is readable
-
-#Each update is important to keep for grading
-```
-
-
-# Update 5
-
-* Please put a bulleted list of things you have accomplished since the last update
-  + Include things that didn't work but you tried
-  + Things you are planning on doing
-  + Questions that you might have on your project.
-* Reference the sections and figures you are discussing here
-
-# Update 4
-
-* Please put a bulleted list of things you have accomplished since the last update
-  + Include things that didn't work but you tried
-  + Things you are planning on doing
-  + Questions that you might have on your project.
-* Reference the sections and figures you are discussing here
-
-# Update 3
-
-* Please put a bulleted list of things you have accomplished since the last update
-  + Include things that didn't work but you tried
-  + Things you are planning on doing
-  + Questions that you might have on your project.
-* Reference the sections and figures you are discussing here
-
-# Update 2
-
-* Refined Question: Does genomic expression data accurately predict degree of astrocytoma?
-* Variables:
-  - Each row is a single human brain tumor sample from a single individual
-  - Each column is a single transcript
-  - Thus, each cell corresponds to expression of gene Y in patient X. 
-* Data Plan:
-  - 0: clean data and assign names to variables
-  - 1: basic questions using EDA (e.g. PCA and gene exploration) to determine dimensions and correlations
-  - 2: create clusters using UMAP and tSNE to tease seperatability based on tumor
-  - 3: train a neural network using techniques like regularization to handle the wide matrix
-
-# Update 1
-
 * The dataset I have chosen to work with this semester is the GSE50161 dataset from the paper "Expression data from human brain tumors and human normal brain" from Griesinger et. al. The original dataset can be found here: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50161. The processed data can be found here: https://www.kaggle.com/brunogrisci/brain-cancer-gene-expression-cumida.
-* For this dataset, my primary question is whether or not we can determine the subtype of astrocytoma (a form of brain cancer) using gene expression data (Supervised Learning). The binary subquestion will be to simply determine malignancy through the expression data. The second question I would like to ask is how well the phenotype correlates with the genotype (Unsupervised Learning), and what genes are primarily responsible for the phenotypic variance. For this problem, this means assessing the distance between a sample and its cluster.  
-* My predictor variables are going to be the expression of each gene, of which there are slightly over 50,000.
-* My response variable is going to simply be the type of tumor. 
-* As I am a medical student interested in pediatric oncology and computer science, the appeal of this dataset, one about brain cancer in kids, is fairly obvious. As a future computationally-oriented physician, I am excited about the role of machine learning and predictive modeling on improving healthcare, and understanding how to implement and optimize these tools to benefit patient care is invaluable. There is a significant shortage of physicians globally, and machine learning algorithms for auto-diagnosis or clinical support are potentially the biggest next step in healthcare. 
+* For this dataset, my primary question is whether or not we can determine the subtype of astrocytoma (a form of brain cancer) using gene expression data (Supervised Learning). The binary subquestion will be to simply determine malignancy through the expression data. The second question I would like to ask is how well the phenotype correlates with the genotype (Unsupervised Learning), and what genes are primarily responsible for the phenotypic variance. For this problem, this means assessing the distance between a sample and its cluster. 
 * The dataset is a wide matrix, with over 50,000 variables for just 130 samples. This poses an interesting challenge for machine learning, and I will likely have to first learn then apply regularization or dimensional reduction to prevent overfitting. Each row is the gene expression of profile of sample of human cells that has 1 of 5 labels corresponding to the grade and presence of astrocytoma (Grades I --> Grade IV or normal). Each column represents the (normalized) expression of each gene.
 * The outcome of the project is to hopefully develop a tool that can categorize the severity of an astrocytoma based on its gene expression profile.
-* I will start by doing some basic data exploration to look for trends by using algorithms like UMAP, tSNE, and PCA. These algorithms can show me outliers that I am not sure if I will filter or not. Next I will use SVD to find the genes that contribute the most to the variance and determine the most important genes in determining the severity of a tumor. Since I am using a multi-class model, I will have to average gene expressions within each group and then run SVD. After data exploration, I will try to use the information gathered to first create a model that determines whether or not a patient has cancer, and then a model to determine the severity of the cancer. 
-  + Within this data plan, some of the things I still need to learn include SVD of genomic data (specifically data matrix formation), how to create a multi-class regression model, and regularization since my data matrix is wider than it is tall. 
-  
-* My alternate dataset is predicting pancreatic cancer from biomarkers in urine (e.g. urine creatinine). The dataset is found here: https://www.kaggle.com/johnjdavisiv/urinary-biomarkers-for-pancreatic-cancer.  
 
 # Excuetive Summary
   
@@ -192,10 +137,13 @@ var_explained_df <- data.frame(PC = paste0("PC", 1:length(means_pca_fit$sdev)),
                                Variance = (means_pca_fit$sdev)^2/sum((means_pca_fit$sdev)^2))
 var_explained_df$label <- round(var_explained_df$Variance, 3)
 
-ggplot(data = var_explained_df, aes(x = PC,y = Variance, group = 1, label = label)) +
+means_pca_plot <- ggplot(data = var_explained_df, aes(x = PC,y = Variance, group = 1, label = label)) +
   geom_point() + 
   geom_line() + 
   geom_text(hjust = 0, nudge_x = 0.05)
+
+ggsave(file="./figures/means_pca.svg", plot = means_pca_plot, height = 7, width = 7)
+means_pca_plot
 ```
 
   Following PCA, the top 5 contributing genes to astrocytoma differentiation were assessed by looking at the first 5 entries of principal component 1. These 5 AFFY codes were cross-referenced on the internet to find the genes most important to progression of astrocytoma. 
@@ -215,11 +163,13 @@ pca_df <- data.frame(PC1 = pca_fit$x[,1], #1st PC
                      PC2 = pca_fit$x[,2], #2nd PC
                      type = type)
 
-ggplot(pca_df, aes(PC1, PC2, colour = type)) + 
+pca_plot <- ggplot(pca_df, aes(PC1, PC2, colour = type)) + 
   geom_point()
+ggsave(file="./figures/pca.svg", plot = pca_plot, height = 7, width = 10)
+pca_plot
 ```
   PCA produces awful results, with little to no clustering by cancer subtype. This is common of gene set enrichment datasets, and thus advances techniques like tSNE and UMAP were developed to improve clustering accuracy.
-```{r tSNE, include = FALSE}
+```{r tSNE, echo = FALSE, eval = FALSE}
 tSNE_fit <- Rtsne(gene_expr)
 tSNE_df <- data.frame(tSNE1 = tSNE_fit$Y[,1], #1st tSNE dimension
                       tSNE2 = tSNE_fit$Y[,2], #2nd tSNE dimension
@@ -235,8 +185,11 @@ umap_df <- data.frame(UMAP1 = umap_fit$layout[,1], #1st UMAP dimension
                       UMAP2 = umap_fit$layout[,2], #2nd UMAP dimension
                       type = type)
 
-ggplot(umap_df, aes(UMAP1, UMAP2, colour = type)) +
+umap_plot <- ggplot(umap_df, aes(UMAP1, UMAP2, colour = type)) +
   geom_point()
+
+ggsave(file="./figures/umap.svg", plot = umap_plot, height = 7, width = 10)
+umap_plot
 ```
   From the UMAP plot, we can clearly see much better separability, with the normal cells, medulloblastoma tumors, and ependymoma tumors (mostly) forming their own clusters. Additionally, it seems as though pilocytic astrocytomas are genetically similar to glioblastomas. 
 # Statistical Learning: Modeling \& Prediction
@@ -251,7 +204,7 @@ ggplot(umap_df, aes(UMAP1, UMAP2, colour = type)) +
 * Interpret results
 * Challenge results
 
-```{r clusters, include = FALSE}
+```{r clusters, echo = FALSE, eval = FALSE}
 library(NbClust)
 NbClust(gene_expr, method = "kmeans")
 ```
