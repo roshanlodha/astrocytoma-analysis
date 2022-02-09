@@ -86,8 +86,7 @@ gene_expr <- gene_expr %>%
 head(gene_expr[1:8]) ## displays just the first 8 transcripts of just the first 5 samples
 ```
 ```{r assign-gene-name}
-install.packages("annotate")
-library("annotate")
+library(ArrayExpress)
 ```
 
 ## Data Vizualizations
