@@ -61,29 +61,33 @@ theme_set(ggprism::theme_prism()) #using GraphPad Prism based theme from ggprism
 # Exploratory Data Analysis
 
 ## Explanation of your data set
-  The brain cancer GSE dataset is derived from the paper "Expression data from human brain tumors and human normal brain" by Griesinger et. al. The data was pre-processed to convert the raw expression read data into gene set enrichment (GSE) data using command-line tools to be used for downstream bioinformatics applications. After processing, the data was made available on Kaggle. 
+  The brain cancer GSE dataset is derived from the paper ["Expression data from human brain tumors and human normal brain" by Griesinger et. al](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50161). The data was pre-processed to convert the raw expression read data into gene set enrichment (GSE) data using command-line tools to be used for downstream bioinformatics applications. After processing, the data was made available on [Kaggle](https://www.kaggle.com/brunogrisci/brain-cancer-gene-expression-cumida). 
   Each row of the dataset corresponds to a single sample, or a single brain tumor specimen, and its RNA-expression data. Each column corresponds to a specific transcript, that maps to a region of the genome. For example, the first transcript, 1007_s_at, maps to the gene Discoidin Domain Receptor Tyrosine Kinase 1 (DDR1). The transcripts code refers to the gene's Affymetrix Probe ID, with Affymetrix being the company conducting the sequencing. The overall dimensions of the dataset include 130 specimen, each with expression data for 54,613 genes. Each expression value, and hence each cell, is numeric, with the exception of the "type" column, which denotes the type of astrocytoma. 
   Astrocytoma is an aggresive cancer that originates in the astrocytes in the brain, and is generally graded on a scale of 0 to 4, with 0 being control (no astrocytoma). Thus each sample is one of 5 types. These assignments were made using histology of the biopsied tissue. 
 
-```{r loading-and-splitting}
+```{r loading, message = FALSE}
 brain_cancer_GSE <- read_csv("./Brain_GSE50161.csv") # load in data
+```
 
+## Data Cleaning
+  As aforementioned, the nature of the data mitigated the need for extensive data cleaning. However, AFFY control and background control probes needed to be removed, as they were used to determine the quality and depth of the sequencing and would artificially skew the data as they would be detected equally in each subtype of brain cancer. 
+``` {r cleaning}
 type <- brain_cancer_GSE[ , "type"] # isolate the data label
 gene_expr <- brain_cancer_GSE %>% 
   dplyr::select(where(is.numeric)) %>% # only select gene expression data
   column_to_rownames("samples")
 
 head(gene_expr[1:8]) # displays just the first 8 transcripts of just the first 5 samples
-```
 
-## Data Cleaning
-  As aforementioned, the nature of the data mitigated the need for extensive data cleaning. However, AFFY control and background control probes needed to be removed, as they were used to determine the quality and depth of the sequencing and would artificially skew the data as they would be detected equally in each subtype of brain cancer. 
-``` {r cleaning}
 gene_expr <- gene_expr %>% 
   select(-contains("AFFX-")) %>% #removing affy control probes
   select(-contains("BGP-")) #removes background control probes 
 
 head(gene_expr[1:8]) ## displays just the first 8 transcripts of just the first 5 samples
+```
+```{r assign-gene-name}
+install.packages("annotate")
+library("annotate")
 ```
 
 ## Data Vizualizations
@@ -116,6 +120,7 @@ means_pca_plot
 ```{r top5}
 pc1 <- data.frame(means_pca_fit$rotation[, 1]) %>% 
   arrange(desc(means_pca_fit.rotation...1.))
+colnames(pc1) <- c("Variance")
 top5 <- head(pc1, 5)
 top5$gene <- c("GABRG2", "STMN2", "MYT1L", "NEFL", "MAP4")
 top5
